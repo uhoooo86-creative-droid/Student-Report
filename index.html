@@ -8,6 +8,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#F7F8FA;min-height:100vh}
@@ -17,9 +20,45 @@ textarea,input{font-family:inherit}
 @media print {
   body * { visibility: hidden; }
   #printable-area, #printable-area * { visibility: visible; }
-  #printable-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+  #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
   .no-print { display: none !important; }
-  .print-only-title { display: block !important; }
+  @page { margin: 18mm 16mm; }
+}
+
+#printable-area {
+  font-family: 'Noto Serif KR', 'Apple SD Gothic Neo', serif;
+  color: #1E2A38;
+  max-width: 720px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 0;
+}
+.doc-header { border-bottom: 3px double #1A3A5C; padding-bottom: 18px; margin-bottom: 28px; }
+.doc-header-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+.doc-eyebrow { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; font-size: 10px; letter-spacing: 2px; color: #8A95A3; font-weight: 700; }
+.doc-issue-date { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; font-size: 11px; color: #8A95A3; }
+.doc-school-name { font-size: 15px; font-weight: 700; color: #1A3A5C; letter-spacing: 1px; margin-bottom: 10px; }
+.doc-title-row { display: flex; justify-content: space-between; align-items: center; }
+.doc-title { font-size: 26px; font-weight: 800; color: #1E2A38; letter-spacing: -0.5px; }
+.doc-child-tag { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; font-size: 13px; font-weight: 700; color: #fff; background: #1A3A5C; border-radius: 4px; padding: 6px 14px; }
+.doc-section { margin-bottom: 26px; }
+.doc-section-title { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; font-size: 15px; font-weight: 800; color: #1A3A5C; margin-bottom: 16px; display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid #1A3A5C; padding-bottom: 8px; }
+.doc-num { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; font-size: 12px; color: #fff; background: #4A7C59; border-radius: 3px; padding: 2px 7px; letter-spacing: 1px; }
+.doc-radar-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.doc-score-table { flex: 1; min-width: 280px; border-collapse: collapse; font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; font-size: 12px; }
+.doc-score-table th { text-align: left; font-size: 10px; color: #8A95A3; font-weight: 700; padding: 6px 8px; border-bottom: 1.5px solid #1A3A5C; }
+.doc-score-table td { padding: 8px 8px; border-bottom: 1px solid #E2E8F0; color: #1E2A38; }
+.doc-score-cell { font-weight: 800; color: #1A3A5C; }
+.doc-trend-cell { font-size: 10.5px; color: #64748B; }
+.doc-divider { height: 1px; background: linear-gradient(to right, transparent, #C9CFD8, transparent); margin: 30px 0; }
+.doc-report-text { font-size: 14px; line-height: 2; color: #2A3A4A; text-align: justify; white-space: pre-wrap; }
+.doc-footer { margin-top: 40px; }
+.doc-footer-line { height: 1px; background: #1A3A5C; margin-bottom: 10px; }
+.doc-footer-row { display: flex; justify-content: space-between; font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; font-size: 10px; color: #8A95A3; }
+
+@media (max-width: 600px) {
+  .doc-title { font-size: 20px; }
+  .doc-radar-wrap { flex-direction: column; }
 }
 </style>
 </head>
@@ -221,6 +260,11 @@ function ResultScreen({child,allData,schoolId,onBack}){
   const [report,setReport]=useState('');
   const [loading,setLoading]=useState(false);
   const [saved,setSaved]=useState(false);
+  const [schoolName,setSchoolName]=useState('');
+
+  useEffect(()=>{
+    sb.rpc('my_school_name').then(({data})=>setSchoolName(data||''));
+  },[]);
 
   async function generate(){
     setLoading(true);
@@ -264,64 +308,131 @@ function ResultScreen({child,allData,schoolId,onBack}){
           🖨️ 인쇄하기
         </button>}
       </div>
-      <div id="printable-area">
-      <h2 style={{fontSize:18,fontWeight:800,color:C.primary,marginBottom:4}}>{child.child_name} · 성장 포트폴리오</h2>
-      <p style={{fontSize:12,color:C.muted,marginBottom:16}}>5대 영역 통합 분석</p>
-      <div style={{display:'flex',justifyContent:'center',marginBottom:16}}>
-        <svg viewBox="0 0 300 300" style={{width:'100%',maxWidth:280}}>
-          {[0.25,0.5,0.75,1].map(sc=>(
-            <polygon key={sc} points={radarData.map((_,i)=>`${pt(i,sc).x},${pt(i,sc).y}`).join(' ')} fill="none" stroke="#E2E8F0" strokeWidth="1"/>
-          ))}
-          {radarData.map((_,i)=><line key={i} x1={cx} y1={cy} x2={pt(i,1).x} y2={pt(i,1).y} stroke="#E2E8F0" strokeWidth="1"/>)}
-          <polygon points={radarData.map((d,i)=>{const sc=d.value/100;return `${pt(i,sc).x},${pt(i,sc).y}`;}).join(' ')} fill="rgba(74,124,89,0.18)" stroke="#4A7C59" strokeWidth="2"/>
-          {radarData.map((d,i)=>{const lp=pt(i,1.28);return <text key={i} x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="middle" style={{fontSize:9,fill:C.primary,fontWeight:700}}>{d.label}</text>;})}
-          {radarData.map((d,i)=>{const p=pt(i,d.value/100);return <circle key={i} cx={p.x} cy={p.y} r={4} fill="#4A7C59"/>;})}
-        </svg>
-      </div>
-      <div style={{background:C.surface,borderRadius:12,padding:16,marginBottom:12,boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
-        <p style={{fontWeight:700,color:C.primary,fontSize:14,marginBottom:12}}>5대 영역 점수</p>
-        {DOMAINS.map(d=>{
-          const pScores=allData.map((pd,i)=>({label:PHASES[i].label,val:domainAvg(pd.scores,d.id)}));
-          const latest=[...pScores].reverse().find(s=>s.val>0);
-          const score=latest?.val??0;
-          return (
-            <div key={d.id} style={{marginBottom:12}}>
-              <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                <span style={{fontSize:13,fontWeight:600,color:C.text}}>{d.icon} {d.label}</span>
-                <span style={{fontSize:13,fontWeight:800,color:d.color}}>{score}점</span>
+
+      {/* 화면용 미리보기 (인쇄 안 됨) */}
+      <div className="no-print">
+        <h2 style={{fontSize:18,fontWeight:800,color:C.primary,marginBottom:4}}>{child.child_name} · 성장 포트폴리오</h2>
+        <p style={{fontSize:12,color:C.muted,marginBottom:16}}>5대 영역 통합 분석</p>
+        <div style={{display:'flex',justifyContent:'center',marginBottom:16}}>
+          <svg viewBox="0 0 300 300" style={{width:'100%',maxWidth:280}}>
+            {[0.25,0.5,0.75,1].map(sc=>(
+              <polygon key={sc} points={radarData.map((_,i)=>`${pt(i,sc).x},${pt(i,sc).y}`).join(' ')} fill="none" stroke="#E2E8F0" strokeWidth="1"/>
+            ))}
+            {radarData.map((_,i)=><line key={i} x1={cx} y1={cy} x2={pt(i,1).x} y2={pt(i,1).y} stroke="#E2E8F0" strokeWidth="1"/>)}
+            <polygon points={radarData.map((d,i)=>{const sc=d.value/100;return `${pt(i,sc).x},${pt(i,sc).y}`;}).join(' ')} fill="rgba(74,124,89,0.18)" stroke="#4A7C59" strokeWidth="2"/>
+            {radarData.map((d,i)=>{const lp=pt(i,1.28);return <text key={i} x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="middle" style={{fontSize:9,fill:C.primary,fontWeight:700}}>{d.label}</text>;})}
+            {radarData.map((d,i)=>{const p=pt(i,d.value/100);return <circle key={i} cx={p.x} cy={p.y} r={4} fill="#4A7C59"/>;})}
+          </svg>
+        </div>
+        <div style={{background:C.surface,borderRadius:12,padding:16,marginBottom:12,boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
+          <p style={{fontWeight:700,color:C.primary,fontSize:14,marginBottom:12}}>5대 영역 점수</p>
+          {DOMAINS.map(d=>{
+            const pScores=allData.map((pd,i)=>({label:PHASES[i].label,val:domainAvg(pd.scores,d.id)}));
+            const latest=[...pScores].reverse().find(s=>s.val>0);
+            const score=latest?.val??0;
+            return (
+              <div key={d.id} style={{marginBottom:12}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+                  <span style={{fontSize:13,fontWeight:600,color:C.text}}>{d.icon} {d.label}</span>
+                  <span style={{fontSize:13,fontWeight:800,color:d.color}}>{score}점</span>
+                </div>
+                <div style={{height:7,borderRadius:99,background:C.border}}>
+                  <div style={{height:'100%',borderRadius:99,background:d.color,width:`${score}%`}}/>
+                </div>
+                <div style={{display:'flex',gap:4,marginTop:4,flexWrap:'wrap'}}>
+                  {pScores.filter(s=>s.val>0).map(s=>(
+                    <span key={s.label} style={{fontSize:10,color:d.color,background:d.light,borderRadius:20,padding:'1px 7px',fontWeight:600}}>{s.label}: {s.val}점</span>
+                  ))}
+                </div>
               </div>
-              <div style={{height:7,borderRadius:99,background:C.border}}>
-                <div style={{height:'100%',borderRadius:99,background:d.color,width:`${score}%`}}/>
-              </div>
-              <div style={{display:'flex',gap:4,marginTop:4,flexWrap:'wrap'}}>
-                {pScores.filter(s=>s.val>0).map(s=>(
-                  <span key={s.label} style={{fontSize:10,color:d.color,background:d.light,borderRadius:20,padding:'1px 7px',fontWeight:600}}>{s.label}: {s.val}점</span>
-                ))}
-              </div>
+            );
+          })}
+        </div>
+        <div style={{background:C.surface,borderRadius:12,padding:16,boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:6}}>
+            <p style={{fontWeight:700,color:C.primary,fontSize:14}}>📄 성장 서술 리포트</p>
+            <div style={{display:'flex',gap:6}}>
+              <button onClick={generate} disabled={loading}
+                style={{background:C.accent,color:'#fff',border:'none',borderRadius:7,padding:'7px 12px',fontSize:12,fontWeight:700,cursor:'pointer',opacity:loading?0.6:1}}>
+                {loading?'생성중…':report?'재생성':'AI 리포트 생성'}
+              </button>
+              {report&&<button onClick={save} style={{background:C.primary,color:'#fff',border:'none',borderRadius:7,padding:'7px 12px',fontSize:12,fontWeight:700,cursor:'pointer'}}>
+                {saved?'저장됨!':'저장'}
+              </button>}
             </div>
-          );
-        })}
+          </div>
+          {report
+            ?<p style={{fontSize:13,color:C.text,lineHeight:1.8,whiteSpace:'pre-wrap'}}>{report}</p>
+            :<p style={{color:C.muted,fontSize:13,textAlign:'center',padding:'16px 0'}}>버튼을 눌러 AI 성장 리포트를 생성하세요.</p>
+          }
+        </div>
       </div>
-      <div style={{background:C.surface,borderRadius:12,padding:16,boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
-        <div className="no-print" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:6}}>
-          <p style={{fontWeight:700,color:C.primary,fontSize:14}}>📄 성장 서술 리포트</p>
-          <div style={{display:'flex',gap:6}}>
-            <button onClick={generate} disabled={loading}
-              style={{background:C.accent,color:'#fff',border:'none',borderRadius:7,padding:'7px 12px',fontSize:12,fontWeight:700,cursor:'pointer',opacity:loading?0.6:1}}>
-              {loading?'생성중…':report?'재생성':'AI 리포트 생성'}
-            </button>
-            {report&&<button onClick={save} style={{background:C.primary,color:'#fff',border:'none',borderRadius:7,padding:'7px 12px',fontSize:12,fontWeight:700,cursor:'pointer'}}>
-              {saved?'저장됨!':'저장'}
-            </button>}
+
+      {/* 인쇄 전용 정식 문서 레이아웃 */}
+      {report&&(
+        <div id="printable-area">
+          <div className="doc-header">
+            <div className="doc-header-top">
+              <span className="doc-eyebrow">SOCIAL · EMOTIONAL DEVELOPMENT REPORT</span>
+              <span className="doc-issue-date">발급일 {new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'})}</span>
+            </div>
+            <h1 className="doc-school-name">{schoolName||'기관명'}</h1>
+            <div className="doc-title-row">
+              <h2 className="doc-title">사회·정서 발달 성장 포트폴리오</h2>
+              <span className="doc-child-tag">{child.child_name}</span>
+            </div>
+          </div>
+
+          <div className="doc-section">
+            <h3 className="doc-section-title"><span className="doc-num">01</span>5대 영역 통합 분석</h3>
+            <div className="doc-radar-wrap">
+              <svg viewBox="0 0 300 300" style={{width:220,height:220}}>
+                {[0.25,0.5,0.75,1].map(sc=>(
+                  <polygon key={sc} points={radarData.map((_,i)=>`${pt(i,sc).x},${pt(i,sc).y}`).join(' ')} fill="none" stroke="#D8DEE6" strokeWidth="1"/>
+                ))}
+                {radarData.map((_,i)=><line key={i} x1={cx} y1={cy} x2={pt(i,1).x} y2={pt(i,1).y} stroke="#D8DEE6" strokeWidth="1"/>)}
+                <polygon points={radarData.map((d,i)=>{const sc=d.value/100;return `${pt(i,sc).x},${pt(i,sc).y}`;}).join(' ')} fill="rgba(26,58,92,0.12)" stroke="#1A3A5C" strokeWidth="2"/>
+                {radarData.map((d,i)=>{const lp=pt(i,1.28);return <text key={i} x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="middle" style={{fontSize:10,fill:'#1A3A5C',fontWeight:700}}>{d.label}</text>;})}
+                {radarData.map((d,i)=>{const p=pt(i,d.value/100);return <circle key={i} cx={p.x} cy={p.y} r={3.5} fill="#1A3A5C"/>;})}
+              </svg>
+              <table className="doc-score-table">
+                <thead>
+                  <tr><th>영역</th><th>점수</th><th>평가 추이</th></tr>
+                </thead>
+                <tbody>
+                  {DOMAINS.map(d=>{
+                    const pScores=allData.map((pd,i)=>({label:PHASES[i].label,val:domainAvg(pd.scores,d.id)}));
+                    const latest=[...pScores].reverse().find(s=>s.val>0);
+                    const score=latest?.val??0;
+                    return (
+                      <tr key={d.id}>
+                        <td>{d.label}</td>
+                        <td className="doc-score-cell">{score}점</td>
+                        <td className="doc-trend-cell">{pScores.filter(s=>s.val>0).map(s=>`${s.label} ${s.val}`).join(' → ')}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="doc-divider"></div>
+
+          <div className="doc-section">
+            <h3 className="doc-section-title"><span className="doc-num">02</span>종합 성장 서술</h3>
+            <p className="doc-report-text">{report}</p>
+          </div>
+
+          <div className="doc-footer">
+            <div className="doc-footer-line"></div>
+            <div className="doc-footer-row">
+              <span>{schoolName||'기관명'}</span>
+              <span>본 보고서는 학기별 관찰 평가를 바탕으로 작성되었습니다.</span>
+            </div>
           </div>
         </div>
-        <p className="print-only-title" style={{fontWeight:700,color:C.primary,fontSize:14,marginBottom:12,display:'none'}}>📄 성장 서술 리포트</p>
-        {report
-          ?<p style={{fontSize:13,color:C.text,lineHeight:1.8,whiteSpace:'pre-wrap'}}>{report}</p>
-          :<p style={{color:C.muted,fontSize:13,textAlign:'center',padding:'16px 0'}}>버튼을 눌러 AI 성장 리포트를 생성하세요.</p>
-        }
-      </div>
-      </div>
+      )}
     </div>
   );
 }
